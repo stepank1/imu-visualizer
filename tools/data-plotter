@@ -1,0 +1,6 @@
+#!/usr/bin/gnuplot -p
+
+set datafile separator ","
+plot "data-output.csv" using 0:1 title "XY" pointsize 2 pointtype 7, "data-output.csv" using 0:2 title "XZ" pointsize 2 pointtype 7, "data-output.csv" using 1:2 title "YZ" pointsize 2 pointtype 7
+pause 1
+reread
