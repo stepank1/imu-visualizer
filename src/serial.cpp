@@ -1,3 +1,6 @@
+// code modified from mbdedded ninja post by Geoffrey Hunter
+// https://blog.mbedded.ninja/programming/operating-systems/linux/linux-serial-ports-using-c-cpp/
+
 #include "serial.h"
 
 bool Serial::openSerial()

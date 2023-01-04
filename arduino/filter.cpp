@@ -1,3 +1,7 @@
+// IMPORTANT
+// this code is based on filter design by Philip Schmidt 
+// http://philstech.blogspot.com/2014/09/fast-quaternion-integration-for.html 
+
 #include <math.h>
 #include "filter.h"
 
@@ -8,8 +12,6 @@ static vec3 mag_body, mag_world;
 static vec3 correction_world, correction_world_a, correction_world_m, correction_body;
 static quat orientation, orientation_last;
 static float bx, by, bz;
-
-// source: http://philstech.blogspot.com/2014/09/fast-quaternion-integration-for.html 
 
 quat update_filter(float ax, float ay, float az, float gx, float gy, float gz,
 		   float mx, float my, float mz, float dt)
