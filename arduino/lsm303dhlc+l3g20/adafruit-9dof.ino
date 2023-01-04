@@ -1,16 +1,17 @@
 /*************************************NOTES*****************************************
  *
- * This code is based on driver written by Kevin Townsed for Adafruit Industries 9DOF LSM303DLHC/L3GD20H:
+ * For reference see: 
  * https://github.com/adafruit/Adafruit_LSM303DLHC
  * https://github.com/adafruit/Adafruit_L3GD20_U
+ * https://github.com/adafruit/Adafruit_Sensor
  *
- * LSM303DLHC Accelerometer + Magnetometer datasheet:
- * https://cdn-shop.adafruit.com/datasheets/LSM303DLHC.PDF
- *
- * L3GD20H Gyroscope datasheet:
+ * Datasheets: 
+ * https://cdn-shop.adafruit.com/datasheets/LSM303DLHC.PDF 
  * https://cdn-shop.adafruit.com/datasheets/L3GD20.pdf
- * 
+ *
  ***********************************************************************************/
+
+
 #include <Wire.h>
 #include <math.h>
 #include "filter.h"
@@ -193,6 +194,7 @@ bool start_sensor(byte sensor_i2c_address)
 
 		break;
 	case LSM303_ADDRESS_MAG:
+		// set continous mode
 		write_byte(sensor_i2c_address, LSM303_REGISTER_MR_M, 0x00);
 
 		// check if powered up
@@ -201,13 +203,6 @@ bool start_sensor(byte sensor_i2c_address)
 		if (reg_value != 0x10)
 			return false;
 
-		// set range to +/-1.3G
-		write_byte(sensor_i2c_address, LSM303_REGISTER_CRB_M, 0x20);
-
-		reg_value =
-			read_byte(sensor_i2c_address, LSM303_REGISTER_CRB_M);
-		if (reg_value != 0x20)
-			return false;
 		break;
 	case L3GD20H_ADDRESS:
 		// set normal mode 95 hz
@@ -329,10 +324,9 @@ void read_gyro()
 }
 
 /*      
- *       resources for implementing the complementary filter:
- *       https://web.archive.org/web/20091121085323/http://www.mikroquad.com/bin/view/Research/ComplementaryFilter
- *       https://github.com/adafruit/Adafruit_9DOF/blob/master/Adafruit_9DOF.cpp
- * 
+ * resources for implementing the complementary filter:
+ * https://web.archive.org/web/20091121085323/http://www.mikroquad.com/bin/view/Research/ComplementaryFilter
+ * https://github.com/adafruit/Adafruit_9DOF/blob/master/Adafruit_9DOF.cpp
  */
 
 void get_roll()
