@@ -1,5 +1,5 @@
 // IMPORTANT
-// this code is based on filter design by Philip Schmidt 
+// this code is implementation of filter design by Philip Schmidt 
 // http://philstech.blogspot.com/2014/09/fast-quaternion-integration-for.html 
 
 #include <math.h>
