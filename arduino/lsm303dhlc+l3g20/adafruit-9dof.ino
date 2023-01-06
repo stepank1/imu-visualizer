@@ -23,31 +23,32 @@
 //#define CALIB
 //#define USE_EULERS
 
-#define GRAVITY_EARTH 9.80665f // earth gravity in m/s^2
-#define GAUSS_TO_MICROTESLA 100 // gaus to micro-tesla multiplier
-#define DPS_TO_RADS 0.017453293f // degrees/s to rad/s multiplier
-#define RAD_TO_DGS 180 / M_PI // rad/s to degrees/s multiplier
+#define GRAVITY_EARTH 9.80665f		// earth gravity in m/s^2
+#define GAUSS_TO_MICROTESLA 100		// gaus to micro-tesla multiplier
+#define DPS_TO_RADS 0.017453293f	// degrees/s to rad/s multiplier
+#define RAD_TO_DGS 180 / M_PI		// rad/s to degrees/s multiplier
 
 #define LSM303_ADDRESS_ACCEL 0x19
-#define LSM303_REGISTER_CTRL_REG1_A 0x20
-#define LSM303_REGISTER_CTRL_REG4_A 0x23
-#define LSM303_REGISTER_OUT_XYZ_A 0x28 | 0x80
+#define LSM303_REGISTER_CTRL_REG1_A 0x20	// control register power
+//#define LSM303_REGISTER_CTRL_REG4_A 0x23	// optional enable High Resolution
+#define LSM303_REGISTER_OUT_X_L_A 0x28 | 0x80 // MSB assert to enable auto-increment
 
 #define LSM303_ADDRESS_MAG 0x1E
-#define LSM303_REGISTER_MR_M 0x02
+#define LSM303_REGISTER_MR_M 0x02 
 #define LSM303_REGISTER_CRA_M 0x00
-#define LSM303_REGISTER_CRB_M 0x01
+//#define LSM303_REGISTER_CRB_M 0x01
 #define LSM303_REGISTER_OUT_X_H_M 0x03
 
 #define L3GD20H_ADDRESS 0x69
 #define L3GD20H_REGISTER_CTRL_REG1 0x20
-#define L3GD20H_REGISTER_CTRL_REG4 0x23
-#define L3GD20H_REGISTER_OUT_XYZ 0x28 | 0x80
+//#define L3GD20H_REGISTER_CTRL_REG4 0x23 
+#define L3GD20H_REGISTER_OUT_X_L 0x28 | 0x80 // MSB assert to enable auto-increment
+
 
 #define LINEAR_ACCELERATION_SENSITIVITY 0.001f // +/-2G range
-#define GYRO_SENSITIVITY 0.00875f // 250 dps
-#define MAGNETIC_GAIN_XY 1100.0f // +/-1.3G range
-#define MAGNETIC_GAIN_Z 980.0f // +/-1.3G range
+#define GYRO_SENSITIVITY 0.00875f			   // 250 dps
+#define MAGNETIC_GAIN_XY 1100.0f			   // +/-1.3G range
+#define MAGNETIC_GAIN_Z 980.0f				   // +/-1.3G range
 
 static int xlo, xhi, ylo, yhi, zlo, zhi;
 static int raw_x, raw_y, raw_z;
@@ -218,6 +219,7 @@ bool start_sensor(byte sensor_i2c_address)
 	return true;
 }
 
+
 void read_sensor(byte sensor_i2c_address, byte output_register)
 {
 	Wire.beginTransmission(sensor_i2c_address);
@@ -310,7 +312,7 @@ void read_sensor(byte sensor_i2c_address, byte output_register)
 
 void read_acc()
 {
-	read_sensor(LSM303_ADDRESS_ACCEL, LSM303_REGISTER_OUT_XYZ_A);
+	read_sensor(LSM303_ADDRESS_ACCEL, LSM303_REGISTER_OUT_X_L_A);
 }
 
 void read_mag()
@@ -320,7 +322,7 @@ void read_mag()
 
 void read_gyro()
 {
-	read_sensor(L3GD20H_ADDRESS, L3GD20H_REGISTER_OUT_XYZ);
+	read_sensor(L3GD20H_ADDRESS, L3GD20H_REGISTER_OUT_X_L);
 }
 
 /*      
