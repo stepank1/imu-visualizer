@@ -1,6 +1,7 @@
 /*************************************NOTES*****************************************
  *
- * For reference see: 
+ * For reference see Adafruit official libraries: 
+ * https://github.com/adafruit/Adafruit_9DOF/blob/master/Adafruit_9DOF.cpp
  * https://github.com/adafruit/Adafruit_LSM303DLHC
  * https://github.com/adafruit/Adafruit_L3GD20_U
  * https://github.com/adafruit/Adafruit_Sensor
@@ -31,24 +32,24 @@
 #define LSM303_ADDRESS_ACCEL 0x19
 #define LSM303_REGISTER_CTRL_REG1_A 0x20	// control register power
 //#define LSM303_REGISTER_CTRL_REG4_A 0x23	// optional enable High Resolution
-#define LSM303_REGISTER_OUT_X_L_A 0x28 | 0x80 // MSB assert to enable auto-increment
+#define LSM303_REGISTER_OUT_X_L_A 0x28 | 0x80 // MSB set to 1 to enable auto-increment
 
 #define LSM303_ADDRESS_MAG 0x1E
 #define LSM303_REGISTER_MR_M 0x02 
 #define LSM303_REGISTER_CRA_M 0x00
-//#define LSM303_REGISTER_CRB_M 0x01
-#define LSM303_REGISTER_OUT_X_H_M 0x03
+#define LSM303_REGISTER_CRB_M 0x01
+#define LSM303_REGISTER_OUT_X_H_M 0x03 // auto-increment enabled by default
 
 #define L3GD20H_ADDRESS 0x69
 #define L3GD20H_REGISTER_CTRL_REG1 0x20
 //#define L3GD20H_REGISTER_CTRL_REG4 0x23 
-#define L3GD20H_REGISTER_OUT_X_L 0x28 | 0x80 // MSB assert to enable auto-increment
+#define L3GD20H_REGISTER_OUT_X_L 0x28 | 0x80 // MSB set to 1 to enable auto-increment
 
 
 #define LINEAR_ACCELERATION_SENSITIVITY 0.001f // +/-2G range
-#define GYRO_SENSITIVITY 0.00875f			   // 250 dps
-#define MAGNETIC_GAIN_XY 1100.0f			   // +/-1.3G range
-#define MAGNETIC_GAIN_Z 980.0f				   // +/-1.3G range
+#define GYRO_SENSITIVITY 0.00875f			   // 245 dps
+#define MAGNETIC_GAIN_XY 1100.0f			   // +/-1.3G range XY
+#define MAGNETIC_GAIN_Z 980.0f				   // +/-1.3G range Z
 
 static int xlo, xhi, ylo, yhi, zlo, zhi;
 static int raw_x, raw_y, raw_z;
@@ -69,9 +70,9 @@ static float roll, pitch, yaw;
 static float dt;
 static unsigned long time_start, time_end;
 
-// used to store max and min values for the magnetometer
+// can be used to store max and min values for the magnetometer calibration
 struct mag {
-	float max_x = 1; //TBD
+	float max_x = 1; 
 	float min_x = 1;
 	float max_y = 1;
 	float min_y = 1;
@@ -104,7 +105,7 @@ void setup()
 		while (1);
 	}
 
-	calib();
+	calib(); 
 }
 
 void loop()
@@ -203,6 +204,9 @@ bool start_sensor(byte sensor_i2c_address)
 			read_byte(sensor_i2c_address, LSM303_REGISTER_CRA_M);
 		if (reg_value != 0x10)
 			return false;
+		
+		// set range to +/- 1.3 gauss
+		// write_byte(sensor_i2c_address, LSM303_REGISTER_CRB_M, 0x20);
 
 		break;
 	case L3GD20H_ADDRESS:
@@ -219,7 +223,7 @@ bool start_sensor(byte sensor_i2c_address)
 	return true;
 }
 
-
+// read sensor output
 void read_sensor(byte sensor_i2c_address, byte output_register)
 {
 	Wire.beginTransmission(sensor_i2c_address);
@@ -248,7 +252,7 @@ void read_sensor(byte sensor_i2c_address, byte output_register)
 		ay = (float)raw_y * LINEAR_ACCELERATION_SENSITIVITY;
 		az = (float)raw_z * LINEAR_ACCELERATION_SENSITIVITY;
 
-		// offset correction
+		// zero level bias correction
 		ax -= offset_ax;
 		ay -= offset_ay;
 		az -= offset_az;
@@ -302,7 +306,7 @@ void read_sensor(byte sensor_i2c_address, byte output_register)
 		gy *= DPS_TO_RADS;
 		gz *= DPS_TO_RADS;
 #endif
-		// offset correction
+		// zero level bias correction
 		gx -= offset_gx;
 		gy -= offset_gy;
 		gz -= offset_gz;
@@ -325,11 +329,9 @@ void read_gyro()
 	read_sensor(L3GD20H_ADDRESS, L3GD20H_REGISTER_OUT_X_L);
 }
 
-/*      
- * resources for implementing the complementary filter:
- * https://web.archive.org/web/20091121085323/http://www.mikroquad.com/bin/view/Research/ComplementaryFilter
- * https://github.com/adafruit/Adafruit_9DOF/blob/master/Adafruit_9DOF.cpp
- */
+      
+// resources for implementing the complementary filter:
+// https://web.archive.org/web/20091121085323/http://www.mikroquad.com/bin/view/Research/ComplementaryFilter
 
 void get_roll()
 {
@@ -361,13 +363,11 @@ void tilt_compensation(float roll, float pitch)
 	//TBD
 }
 
+// used to calculate zero level offsets
 void calib()
 {
-#ifdef MAG_CALIB
-	magCalib();
-#endif
 	//=================
-	// ACCELEROMTER
+	// ACCELEROMETER
 	//=================
 
 	int n = 100;
@@ -414,47 +414,10 @@ void calib()
 	//=================
 	// MAGNETOMETER
 	//=================
-
+	
+	// not implemented
 	get_hard_iron(&m);
 	get_soft_iron(&m);
-}
-
-void mag_calib()
-{
-	static float max_x, min_x;
-	static float max_y, min_y;
-	static float max_z, min_z;
-
-	while (1) {
-		read_mag();
-		if (raw_x > max_x)
-			max_x = raw_x;
-		if (raw_x < min_x)
-			min_x = raw_x;
-
-		if (raw_y > max_y)
-			max_y = raw_y;
-		if (raw_y < min_y)
-			min_y = raw_y;
-
-		if (raw_z > max_z)
-			max_z = raw_z;
-		if (raw_z < min_z)
-			min_z = raw_z;
-
-		Serial.print("MAX X: ");
-		Serial.print(max_x);
-		Serial.print(" MIN X: ");
-		Serial.print(min_x);
-		Serial.print(" MAX Y: ");
-		Serial.print(max_y);
-		Serial.print(" MIN Y: ");
-		Serial.print(min_x);
-		Serial.print(" MAX Z: ");
-		Serial.print(max_z);
-		Serial.print(" MIN Z: ");
-		Serial.println(min_z);
-	}
 }
 
 void get_hard_iron(const struct mag *m)
